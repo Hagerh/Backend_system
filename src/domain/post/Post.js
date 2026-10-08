@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { ValidationError } from './errors.js';
 
 const MAX_TITLE_LENGTH = 200;
-
+//factory pattern " the constructor is restore the state of the object , and the factory method is to create a new object with the business rules applied"
 export class Post {
   constructor({ id, title, content, createdAt }) {
     this.id = id;
