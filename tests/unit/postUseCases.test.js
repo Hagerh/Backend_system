@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CreatePost } from '../../src/application/post/CreatePost.js';
+import { FakeEventPublisher } from '../helpers/FakeEventPublisher.js';
 import { GetPost } from '../../src/application/post/GetPost.js';
 import { ListPosts } from '../../src/application/post/ListPosts.js';
 import { InMemoryPostRepository } from '../../src/infrastructure/database/InMemoryPostRepository.js';
@@ -9,7 +10,7 @@ import { PostNotFoundError, ValidationError } from '../../src/domain/post/errors
 function setup() {
   const repo = new InMemoryPostRepository();
   return {
-    createPost: new CreatePost(repo),
+    createPost: new CreatePost(repo, new FakeEventPublisher()),
     getPost: new GetPost(repo),
     listPosts: new ListPosts(repo),
   };

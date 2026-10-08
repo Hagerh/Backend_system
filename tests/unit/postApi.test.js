@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createApp } from '../../src/app.js';
 import { InMemoryPostRepository } from '../../src/infrastructure/database/InMemoryPostRepository.js';
 import { CreatePost } from '../../src/application/post/CreatePost.js';
+import { FakeEventPublisher } from '../helpers/FakeEventPublisher.js';
 import { GetPost } from '../../src/application/post/GetPost.js';
 import { ListPosts } from '../../src/application/post/ListPosts.js';
 
@@ -12,7 +13,7 @@ let base;
 before(async () => {
   const repo = new InMemoryPostRepository();
   const app = createApp({
-    createPost: new CreatePost(repo),
+    createPost: new CreatePost(repo, new FakeEventPublisher()),
     getPost: new GetPost(repo),
     listPosts: new ListPosts(repo),
   });

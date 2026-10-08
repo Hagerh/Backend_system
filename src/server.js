@@ -2,6 +2,7 @@ import { config } from './config.js';
 import { createApp } from './app.js';
 import { connectMongo } from './infrastructure/database/mongoClient.js';
 import { MongoPostRepository } from './infrastructure/database/MongoPostRepository.js';
+import { LogEventPublisher } from './infrastructure/messaging/LogEventPublisher.js';
 import { CreatePost } from './application/post/CreatePost.js';
 import { GetPost } from './application/post/GetPost.js';
 import { ListPosts } from './application/post/ListPosts.js';
@@ -11,8 +12,10 @@ const { client, db } = await connectMongo(config.mongodb);
 const postRepository = new MongoPostRepository(db);
 await postRepository.init();
 
+const eventPublisher = new LogEventPublisher();
+
 const app = createApp({
-  createPost: new CreatePost(postRepository),
+  createPost: new CreatePost(postRepository, eventPublisher),
   getPost: new GetPost(postRepository),
   listPosts: new ListPosts(postRepository),
 });
