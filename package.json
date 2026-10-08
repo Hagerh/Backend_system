@@ -1,0 +1,26 @@
+{
+  "name": "backend_system",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hagerh/Backend_system.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Hagerh/Backend_system/issues"
+  },
+  "homepage": "https://github.com/Hagerh/Backend_system#readme",
+  "description": "Posts API: DDD, MongoDB, Kafka, Docker",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
