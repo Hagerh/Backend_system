@@ -1,7 +1,22 @@
 services:
+  mongo:
+    image: mongo:7
+    container_name: posts-mongo
+    restart: unless-stopped
+    ports:
+      - "27018:27017"   # optional: inspect with Compass at localhost:27018 (remove on a public server)
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   kafka:
     image: apache/kafka:3.9.0
     container_name: posts-kafka
+    restart: unless-stopped
     ports:
       - "9092:9092"
     environment:
@@ -18,3 +33,51 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx256m
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 15s
+
+  api:
+    build: .
+    container_name: posts-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: posts_db
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_CLIENT_ID: posts-api
+      KAFKA_TOPIC: posts.created
+    depends_on:
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  consumer:
+    build: .
+    container_name: posts-consumer
+    restart: unless-stopped
+    command: ["node", "src/consumer.js"]
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_CLIENT_ID: posts-api
+      KAFKA_TOPIC: posts.created
+      KAFKA_GROUP_ID: posts-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
