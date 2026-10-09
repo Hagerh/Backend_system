@@ -1,0 +1,85 @@
+{
+  "info": {
+    "name": "Posts API",
+    "description": "Create, get and list posts. Creating a post also publishes a PostCreated event to Kafka (see the consumer logs). Select the 'Local' or 'AWS' environment, then run the folder in order (Create Post stores {{postId}} for the next requests).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "postId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/", "host": ["{{baseUrl}}"], "path": [""] } },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('service is up', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+      ] } }]
+    },
+    {
+      "name": "Create Post",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Learning Kafka\",\n  \"content\": \"This is my first event-driven backend.\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/posts", "host": ["{{baseUrl}}"], "path": ["api", "posts"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('201 Created', () => pm.response.to.have.status(201));",
+        "const post = pm.response.json();",
+        "pm.test('returns id, title and createdAt', () => {",
+        "  pm.expect(post.id).to.be.a('string');",
+        "  pm.expect(post.title).to.eql('Learning Kafka');",
+        "  pm.expect(post.createdAt).to.be.a('string');",
+        "});",
+        "pm.collectionVariables.set('postId', post.id);"
+      ] } }]
+    },
+    {
+      "name": "Get Post",
+      "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/posts/{{postId}}", "host": ["{{baseUrl}}"], "path": ["api", "posts", "{{postId}}"] } },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('same post as created', () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('postId')));"
+      ] } }]
+    },
+    {
+      "name": "List Posts",
+      "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/posts", "host": ["{{baseUrl}}"], "path": ["api", "posts"] } },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "const posts = pm.response.json();",
+        "pm.test('is an array containing the created post', () => {",
+        "  pm.expect(posts).to.be.an('array');",
+        "  pm.expect(posts.map(p => p.id)).to.include(pm.collectionVariables.get('postId'));",
+        "});"
+      ] } }]
+    },
+    {
+      "name": "Error cases",
+      "item": [
+        {
+          "name": "Create Post - empty title (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"\",\n  \"content\": \"no title\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/posts", "host": ["{{baseUrl}}"], "path": ["api", "posts"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+            "pm.test('explains the problem', () => pm.expect(pm.response.json().error).to.eql('title is required'));"
+          ] } }]
+        },
+        {
+          "name": "Get Post - unknown id (404)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/posts/does-not-exist", "host": ["{{baseUrl}}"], "path": ["api", "posts", "does-not-exist"] } },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}

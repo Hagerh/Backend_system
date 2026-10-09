@@ -7,8 +7,8 @@ Creating a post stores it in MongoDB and publishes a `PostCreated` event to Kafk
 | | |
 |---|---|
 | **Stack** | Node.js 22 (ESM), Express 5, MongoDB 7, Apache Kafka 3.9 (KRaft), Docker, Docker Compose |
-| **Live deployment** | `http://<PUBLIC_IP>/`  (AWS EC2) |
-| **Postman collection** | [`postman/posts-api.postman_collection.json`](postman/posts-api.postman_collection.json) |
+| **Live deployment** | `http://3.78.228.27/`  (AWS EC2) |
+| **Postman collection** | [`postman/`](postman/): collection + `Local` and `AWS` environments |
 
 ---
 
@@ -229,12 +229,13 @@ The whole stack runs on a single **EC2** instance (Amazon Linux 2023) with Docke
 
 - Security group: port `80` open to the internet (API), port `22` for administration. MongoDB and Kafka are **not** exposed.
 - Started with `API_PORT=80 docker compose up -d --build`; containers restart automatically (`restart: unless-stopped`).
-- Public URL: `http://<PUBLIC_IP>/`, for example `http://<PUBLIC_IP>/api/posts`.
+- Public URL: `http://3.78.228.27/`, for example `http://3.78.228.27/api/posts`.
 
 Steps to reproduce:
 1. Launch an EC2 instance, open ports 22 and 80.
-2. Install Docker, the Compose plugin and Git; add swap if the instance has 1 GB of RAM.
-3. `git clone` the repository and run `API_PORT=80 docker compose up -d --build`.
+2. Install Docker, Git, the Compose plugin and the **buildx** plugin (Amazon Linux's Docker is too old for Compose's `build`; install buildx v0.17+ into `/usr/local/lib/docker/cli-plugins/`). Add 2 GB of swap if the instance has about 1 GB of RAM (this deployment runs on a `t3.micro`).
+3. `git clone` the repository, then `sudo docker compose build api` and `sudo API_PORT=80 docker compose up -d`.
+4. Verify with `sudo docker compose ps` (api, kafka and mongo `healthy`) and `curl http://<public-ip>/`.
 
 ---
 
